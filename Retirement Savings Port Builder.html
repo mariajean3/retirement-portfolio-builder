@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",sans-serif}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>Retirement Savings Portfolio Builder</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: dark title band; planning desk (limits left, suggestion right); full-width outlook cone; comparison; method notes. */
+:root{
+  --lagoon:#2D3A47; --misty:#A9B7C6; --vanilla:#FFF7E6; --blush:#F7C8D3; --rosewood:#B46A72; --sage:#A8B58A;
+  --bg:#F5F6F8; --surface:#FFFFFF; --surface-2:#EEF1F4; --fg:#1E2731; --muted:#5B6876; --line:#D9DFE6;
+  --band:#2D3A47; --band-fg:#F4F6F8; --input-bg:#FFF7E6;
+  --c-current:#B46A72; --c-sugg:#5E7A3E; --c-custom:#2D3A47;
+  --ok:#4F7A3A; --ok-bg:#E6EEDC; --bad:#9E3F4A; --bad-bg:#F7DDE2; --warn:#8A6A1F; --warn-bg:#F6EBCF;
+  --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#161D24; --surface:#1F2831; --surface-2:#26313C; --fg:#E7ECF1; --muted:#9AA8B6; --line:#33404D;
+  --band:#0F151B; --band-fg:#E7ECF1; --input-bg:#2A2A24;
+  --c-current:#D58A93; --c-sugg:#B5C394; --c-custom:#A9B7C6;
+  --ok:#A9C98F; --ok-bg:#24321F; --bad:#E79AA4; --bad-bg:#3A2228; --warn:#E2C27A; --warn-bg:#352D18;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#161D24; --surface:#1F2831; --surface-2:#26313C; --fg:#E7ECF1; --muted:#9AA8B6; --line:#33404D;
+  --band:#0F151B; --band-fg:#E7ECF1; --input-bg:#2A2A24;
+  --c-current:#D58A93; --c-sugg:#B5C394; --c-custom:#A9B7C6;
+  --ok:#A9C98F; --ok-bg:#24321F; --bad:#E79AA4; --bad-bg:#3A2228; --warn:#E2C27A; --warn-bg:#352D18;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:14px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.band{background:var(--band);color:var(--band-fg)}
+header.band .wrap{padding-block:22px 18px;display:flex;flex-wrap:wrap;gap:12px 32px;align-items:flex-end;justify-content:space-between}
+h1{font-family:var(--display);font-weight:600;font-size:28px;letter-spacing:.2px;margin:0;text-wrap:balance}
+.sub{margin:4px 0 0;color:color-mix(in srgb,var(--band-fg) 72%,transparent);max-width:64ch}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--misty)}
+.bandbtn{font:500 13px var(--body);border:1px solid color-mix(in srgb,var(--band-fg) 35%,transparent);background:transparent;color:var(--band-fg);padding:7px 12px;border-radius:999px;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--rosewood);outline-offset:2px}
+main.wrap{padding-block:22px 40px;display:grid;gap:22px}
+.desk{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:22px;align-items:start}
+@media (max-width:920px){.desk{grid-template-columns:minmax(0,1fr)}}
+section.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px}
+h2{font-family:var(--display);font-weight:600;font-size:19px;margin:0 0 4px}
+h3{font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.note{color:var(--muted);font-size:12.5px;margin:0}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px;margin-top:12px}
+@media (max-width:460px){.fields{grid-template-columns:minmax(0,1fr)}}
+.field{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted);min-width:0}
+.field.full{grid-column:1/-1}
+.num{display:flex;align-items:center;gap:4px;background:var(--input-bg);border:1px solid var(--line);border-radius:6px;padding:4px 8px}
+.num input{width:100%;min-width:0;border:0;background:transparent;color:var(--fg);font:500 14px var(--mono);font-variant-numeric:tabular-nums;padding:2px 0}
+.num span{font:12px var(--mono);color:var(--muted)}
+.hz{font:600 20px var(--display);color:var(--fg)}
+.sep{border:0;border-top:1px solid var(--line);margin:16px 0 4px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.seg button{font:500 12.5px var(--body);border:0;background:var(--surface);color:var(--fg);padding:7px 11px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--lagoon);color:#F4F6F8}
+.chk{display:flex;align-items:center;gap:8px;color:var(--fg);font-size:13px}
+.chk input{accent-color:var(--lagoon);width:16px;height:16px}
+details{margin-top:12px}
+.curgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:12px}
+@media (max-width:920px){.curgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:460px){.curgrid{grid-template-columns:minmax(0,1fr)}}
+.curgrid h4{font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 6px;padding-bottom:5px;border-bottom:1px solid var(--line)}
+.curgrid .field{flex-direction:row;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;color:var(--fg)}
+.curgrid .num{width:96px;flex:none}
+.curgrid .num input{text-align:right}
+.curfoot{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:13px}
+.curfoot .total{font:600 14px var(--mono);font-variant-numeric:tabular-nums}
+.curfoot .stat{font:13px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.curfoot .stat b{color:var(--fg);font-weight:500}
+.btn{font:500 13px var(--body);border:1px solid var(--line);background:var(--surface-2);color:var(--fg);padding:7px 12px;border-radius:6px;cursor:pointer}
+.btn:disabled{opacity:.45;cursor:default}
+summary{cursor:pointer;font-weight:500;color:var(--fg)}
+.capgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px;margin-top:10px}
+.capgrid .field{flex-direction:row;align-items:center;justify-content:space-between;gap:8px}
+.capgrid .num{width:92px;flex:none}
+.status{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.pill{font:600 10.5px var(--mono);letter-spacing:.06em;border-radius:999px;padding:2px 8px;white-space:nowrap}
+.pill.ok{color:var(--ok);background:var(--ok-bg)} .pill.bad{color:var(--bad);background:var(--bad-bg)} .pill.warn{color:var(--warn);background:var(--warn-bg)}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+.kpi{border:1px solid var(--line);border-radius:8px;padding:12px;background:var(--surface-2);min-width:0}
+.kpi .k{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.kpi .v{font:600 24px var(--display);font-variant-numeric:tabular-nums;margin-top:2px;overflow-wrap:anywhere}
+.kpi .d{font:12px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.d.up{color:var(--ok)} .d.down{color:var(--bad)}
+@media (max-width:460px){.kpis{grid-template-columns:minmax(0,1fr)}}
+.block{margin-top:18px}
+.moves{display:grid;gap:4px}
+.mv{display:grid;grid-template-columns:minmax(0,120px) minmax(0,1fr) 84px;gap:10px;align-items:center;font-size:13px}
+.mv .bars{position:relative;height:16px}
+.mv .bars i{position:absolute;left:0;height:6px;border-radius:3px}
+.mv .bars i.a{top:1px;background:var(--c-current);opacity:.75}
+.mv .bars i.b{top:9px;background:var(--c-sugg)}
+.mv .chg{font:12px var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.mv .chg.up{color:var(--ok)} .mv .chg.down{color:var(--bad)}
+.mvleg{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-bottom:6px}
+.mvleg i{display:inline-block;width:10px;height:6px;border-radius:3px;margin-right:5px;vertical-align:2px}
+ul.limits{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px}
+ul.limits li{display:flex;gap:8px;align-items:baseline}
+ul.limits li::before{content:"";flex:none;width:6px;height:6px;border-radius:50%;background:var(--rosewood);transform:translateY(-1px)}
+.funds{margin:6px 0 0;padding:0;list-style:none;font-size:13px;display:grid;gap:3px}
+.funds li{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding-bottom:3px}
+.funds b{font:500 13px var(--mono);font-variant-numeric:tabular-nums}
+.outcomes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:520px){.outcomes{grid-template-columns:minmax(0,1fr)}}
+.chartwrap{margin-top:14px;overflow-x:auto}
+#cone{width:100%;min-width:480px;height:auto;display:block}
+#cone text{fill:var(--muted);font:11px var(--mono)}
+#cone .grid{stroke:var(--line);stroke-width:1}
+#cone .band{fill:var(--c-sugg);fill-opacity:.16;stroke:none}
+#cone .exp{fill:none;stroke:var(--c-sugg);stroke-width:2.4}
+#cone .bnd{fill:none;stroke:var(--c-sugg);stroke-width:1;stroke-opacity:.6;stroke-dasharray:4 4}
+#cone .cur{fill:none;stroke:var(--c-current);stroke-width:2;stroke-dasharray:7 4}
+#cone .cus{fill:none;stroke:var(--c-custom);stroke-width:1.6;stroke-dasharray:2 4}
+#cone .end{fill:var(--c-sugg)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:8px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:3px}
+.tune{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:22px;margin-top:6px}
+@media (max-width:920px){.tune{grid-template-columns:minmax(0,1fr)}}
+.group{margin-top:12px}
+.group h4{font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 4px;padding-bottom:5px;border-bottom:1px solid var(--line)}
+.row{display:grid;grid-template-columns:minmax(0,124px) minmax(0,1fr) 78px;gap:12px;align-items:center;padding:5px 0}
+.row label{font-weight:500;display:flex;flex-direction:column;line-height:1.25}
+.row label small{font:400 11px var(--mono);color:var(--muted)}
+.tag{font:500 10px var(--mono);color:var(--warn);background:var(--warn-bg);border-radius:4px;padding:1px 5px;align-self:flex-start;margin-top:3px}
+.row.over label{color:var(--bad)}
+input[type=range]{width:100%;accent-color:var(--lagoon)}
+.row .num input{text-align:right;font-size:13px}
+.btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.btn{font:500 13px var(--body);border:1px solid var(--line);background:var(--surface-2);color:var(--fg);padding:7px 12px;border-radius:6px;cursor:pointer}
+.btn:disabled{opacity:.45;cursor:default}
+.total{font:600 14px var(--mono);font-variant-numeric:tabular-nums}
+.checks{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.checks li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;font-size:13px}
+.checks .val{font:12px var(--mono);color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.rc{display:grid;gap:5px}
+.rc .r{display:grid;grid-template-columns:96px minmax(0,1fr) 108px;gap:8px;align-items:center;font-size:12.5px}
+.rc .track{height:10px;background:var(--surface-2);border-radius:3px;position:relative;overflow:hidden}
+.rc .fill{position:absolute;inset:0 auto 0 0;background:var(--rosewood);border-radius:3px}
+.rc .num2{font:12px var(--mono);text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.rc .num2 b{color:var(--fg);font-weight:500}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px}
+@media (max-width:920px){.two{grid-template-columns:minmax(0,1fr)}}
+.tablewrap{overflow-x:auto;margin-top:10px}
+table{border-collapse:collapse;width:100%;min-width:520px;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;font-size:13px}
+th:first-child,td:first-child{text-align:left}
+thead th{font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--surface-2)}
+td.mono{font-family:var(--mono)}
+.sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:-1px}
+.foot{color:var(--muted);font-size:12px;max-width:95ch;margin:0}
+.busy{opacity:.55;transition:opacity .15s}
+@media (prefers-reduced-motion:reduce){.busy{transition:none}}
+</style>
+</head>
+<body>
+
+
+<header class="band">
+  <div class="wrap">
+    <div>
+      <h1>Retirement Savings Portfolio Builder</h1>
+    </div>
+    <button class="bandbtn" id="resetIPS">Reset to client IPS</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="panel" aria-labelledby="cur-h">
+    <h2 id="cur-h">Your current portfolio</h2>
+    <p class="note" id="curnote">Enter how your savings are invested today, by asset class. The example shown is a 2065 target-date fund.</p>
+    <div class="curgrid" id="curgrid"></div>
+    <div class="curfoot">
+      <span>Total <span class="total" id="curtotal">100.0%</span></span>
+      <button class="btn" id="curscale">Scale to 100%</button>
+      <button class="btn" id="curreset">Reset to example</button>
+      <span class="stat">Expected return <b id="cur-ret">–</b> · Risk <b id="cur-risk">–</b></span>
+    </div>
+  </section>
+
+  <div class="desk">
+    <!-- PLAN & LIMITS -->
+    <section class="panel" aria-labelledby="plan-h">
+      <h2 id="plan-h">Your plan and limits</h2>
+      <p class="note">Defaults are the client's IPS. Change any limit and the suggestion updates.</p>
+      <div class="fields">
+        <div class="field"><label for="ry">Retirement year</label><div class="num"><input id="ry" type="number" step="1" value="2065"></div></div>
+        <div class="field"><span>Horizon</span><div class="hz" id="hz">–</div></div>
+        <div class="field full"><label for="pv">Current savings value</label><div class="num"><span>$</span><input id="pv" type="number" step="1000" min="0" value="100000"></div><span id="pvnote">Example balance. Enter your own; it stays in this tab and is not saved.</span></div>
+      </div>
+      <hr class="sep">
+      <div class="fields">
+        <div class="field"><label for="smax">Maximum risk (σ)</label><div class="num"><input id="smax" type="number" step="0.5" min="1" max="30"><span>%</span></div></div>
+        <div class="field"><label for="rf">Risk-free rate</label><div class="num"><input id="rf" type="number" step="0.01" min="0" max="20"><span>%</span></div></div>
+        <div class="field"><label for="numin">Non-US equities, minimum</label><div class="num"><input id="numin" type="number" step="1" min="0" max="100"><span>% of equities</span></div></div>
+        <div class="field"><label for="numax">Non-US equities, maximum</label><div class="num"><input id="numax" type="number" step="1" min="0" max="100"><span>% of equities</span></div></div>
+        <div class="field full">
+          <label class="chk"><input type="checkbox" id="usefloor">Protect the bad case</label>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span>In the bad case (5%), your savings at retirement are worth at least</span><div class="num" style="width:110px"><input id="floor" type="number" step="5" min="10" max="300"><span>%</span></div><span>of today's value.</span></div>
+          <span>Short horizons make this limit bite; long horizons leave room for more risk.</span>
+        </div>
+        <div class="field full"><span>Investments allowed</span>
+          <div class="seg" role="group" aria-label="Investments allowed"><button id="u-all" aria-pressed="true">All 11 asset classes</button><button id="u-plan" aria-pressed="false">Plan menu only</button></div>
+          <span id="plannote" hidden>Plan menu: S&amp;P 500, Russell 2000, MSCI EAFE, US Aggregate bond and stable-value funds. EM, Gold, High Yield and REITs are not available.</span>
+        </div>
+        <div class="field" id="lccapfield" hidden><label for="lccap">Large-cap fund maximum</label><div class="num"><input id="lccap" type="number" step="1" min="0" max="100"><span>%</span></div></div>
+      </div>
+      <details>
+        <summary>Asset-class caps</summary>
+        <div class="capgrid" id="caps"></div>
+      </details>
+    </section>
+
+    <!-- SUGGESTION -->
+    <section class="panel" aria-labelledby="sug-h" id="sugpanel">
+      <h2 id="sug-h">Suggested portfolio</h2>
+      <div class="status"><span class="pill ok" id="spill">OPTIMAL</span><span class="note" id="stext">Highest expected return that meets every limit.</span></div>
+      <div class="kpis">
+        <div class="kpi"><div class="k">Expected return</div><div class="v" id="s-ret">–</div><div class="d" id="s-ret-d">–</div></div>
+        <div class="kpi"><div class="k">Risk (σ)</div><div class="v" id="s-risk">–</div><div class="d" id="s-risk-d">–</div></div>
+        <div class="kpi"><div class="k">Sharpe</div><div class="v" id="s-sh">–</div><div class="d" id="s-sh-d">–</div></div>
+      </div>
+      <div class="block">
+        <h3>How to get there from your current portfolio</h3>
+        <div class="mvleg"><span><i style="background:var(--c-current);opacity:.75"></i>Current</span><span><i style="background:var(--c-sugg)"></i>Suggested</span></div>
+        <div class="moves" id="moves"></div>
+        <div id="fundbox" hidden><h3 style="margin-top:12px">Plan funds to hold</h3><ul class="funds" id="funds"></ul></div>
+      </div>
+      <div class="block">
+        <h3>What limits the suggestion</h3>
+        <ul class="limits" id="limits"></ul>
+      </div>
+    </section>
+  </div>
+
+  <!-- OUTLOOK -->
+  <section class="panel" aria-labelledby="out-h">
+    <h2 id="out-h">Retirement outlook</h2>
+    <p class="note" id="outnote">Value of your savings at retirement, suggested portfolio vs the current portfolio.</p>
+    <div class="outcomes" style="margin-top:12px">
+      <div class="kpi"><div class="k">Bad case (5%)</div><div class="v" id="o-lo">–</div><div class="d" id="o-lo-d">–</div></div>
+      <div class="kpi"><div class="k">Expected</div><div class="v" id="o-ex">–</div><div class="d" id="o-ex-d">–</div></div>
+      <div class="kpi"><div class="k">Good case (95%)</div><div class="v" id="o-hi">–</div><div class="d" id="o-hi-d">–</div></div>
+    </div>
+    <div class="chartwrap"><svg id="cone" viewBox="0 0 760 300" role="img" aria-label="Projected savings value to retirement"></svg></div>
+    <div class="legend"><span><i style="background:var(--c-sugg);opacity:.35;height:10px;vertical-align:-1px"></i>Suggested, 5%–95% range</span><span><i style="background:var(--c-sugg)"></i>Suggested, expected</span><span><i style="background:var(--c-current)"></i>Current, expected</span></div>
+    <p class="note" style="margin-top:8px">Professor's probability cone: bad/good = PV·e^(ln(1+μ)·t ∓ 1.65·σ·√t); expected = PV·(1+μ)^t. No new contributions or withdrawals and a fixed allocation.</p>
+  </section>
+
+
+  <section class="panel" aria-labelledby="cmp-h">
+      <h2 id="cmp-h">Compare</h2>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Portfolio</th><th>Return</th><th>Risk</th><th>Sharpe</th><th>Equity</th><th>Non-US / eq.</th></tr></thead>
+        <tbody id="cmp"></tbody>
+      </table></div>
+  </section>
+
+  <section class="panel" aria-labelledby="as-h">
+    <h2 id="as-h">Assumptions and method</h2>
+    <p class="foot">Expected return = Σ wᵢ·μᵢ; risk = √(wᵀΣw) with Σᵢⱼ = ρᵢⱼ·σᵢ·σⱼ; Sharpe = (return − risk-free) ÷ risk. The suggestion maximises expected return subject to: weights ≥ 0 and summing to 100%; each asset-class cap; non-US share of equities within the range; risk ≤ the maximum; and, if switched on, the bad-case cone value at retirement ≥ the floor. Same objective as the Excel Solver "Target σ" run. Solved in the browser with an augmented-Lagrangian projected-gradient method. Assumptions: nine course asset classes from the professor's Efficient Frontier workbook (Bloomberg monthly data); REITs (FTSE Nareit All Equity, Nareit) and Cash (3-month T-bills, FRED TB3MS) estimated with the professor's method. Current portfolio = look-through of the client's existing target-date fund (fact sheet 30 Jun 2026; Russell growth shares from Bloomberg, 28 Oct 2026).</p>
+    <details>
+      <summary>Show asset-class assumptions</summary>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Asset class</th><th>Expected return</th><th>Risk (σ)</th><th>Client IPS cap</th><th>On plan menu</th></tr></thead>
+        <tbody id="assum"></tbody>
+      </table></div>
+    </details>
+    <p class="foot" style="margin-top:12px">Built with Claude (Anthropic) from the workbook's assumptions; with the client's IPS settings it reproduces the Excel Solver results. Educational model, not investment advice.</p>
+  </section>
+</main>
+
+<script>
+(function(){
+"use strict";
+// ---------- data from the Excel model ----------
+const N=["LC Growth","LC Value","SC Growth","SC Value","Intl Dev.","EM Stocks","Gold","Bonds","High Yield","REITs","Cash"];
+const MU=[0.0873,0.0852,0.0709,0.0818,0.0702,0.0721,0.0704,0.0435,0.0637,0.076844,0.032104];
+const SD=[0.1578,0.1394,0.2085,0.1632,0.157,0.1995,0.1402,0.0446,0.0755,0.194381,0.005921];
+const R=[[1.0,0.8568,0.8389,0.7268,0.8003,0.6778,0.0446,-0.1998,0.6324,0.6524,-0.0031],[0.8568,1.0,0.8096,0.8509,0.8164,0.6857,0.0331,-0.2287,0.6716,0.6823,-0.0141],[0.8389,0.8096,1.0,0.9083,0.7562,0.6798,0.0712,-0.271,0.5893,0.6164,-0.024],[0.7268,0.8509,0.9083,1.0,0.7264,0.6564,0.0343,-0.2448,0.6397,0.6903,-0.0302],[0.8003,0.8164,0.7562,0.7264,1.0,0.8871,0.1889,-0.1812,0.7591,0.6353,0.0164],[0.6778,0.6857,0.6798,0.6564,0.8871,1.0,0.2617,-0.1947,0.6702,0.5415,0.0101],[0.0446,0.0331,0.0712,0.0343,0.1889,0.2617,1.0,0.2112,0.1467,0.1555,0.0451],[-0.1998,-0.2287,-0.271,-0.2448,-0.1812,-0.1947,0.2112,1.0,-0.0262,-0.0105,0.056],[0.6324,0.6716,0.5893,0.6397,0.7591,0.6702,0.1467,-0.0262,1.0,0.6964,-0.0356],[0.6524,0.6823,0.6164,0.6903,0.6353,0.5415,0.1555,-0.0105,0.6964,1.0,-0.0217],[-0.0031,-0.0141,-0.024,-0.0302,0.0164,0.0101,0.0451,0.056,-0.0356,-0.0217,1.0]];
+const IPS={cap:[0.6,0.6,0.05,0.05,0.6,0.2,0.1,0.6,0.2,0.1,0.1],numin:0.35,numax:0.5,smax:0.16,rf:0.041265,useFloor:true,floor:1.0,plan:false,lccap:0.6};
+const MENU=[1,1,1,1,1,0,0,1,0,0,1];
+const CUR0=[0.285374,0.281126,0.018419,0.017181,0.2471,0.1302,0,0.01,0,0.0087,0.0019];
+const G1=0.50375, G2=0.517391304347826; // Russell 1000 / 2000 growth shares (Bloomberg)
+const FUNDS=["Large Cap Equity Index (S&P 500)","Small Cap Equity Index (Russell 2000)","International Equity Index (MSCI EAFE)","U.S. Bond Index (US Aggregate)","Security Plus stable value"];
+const n=N.length;
+const COV=R.map((row,i)=>row.map((r,j)=>r*SD[i]*SD[j]));
+const I11=N.map((_,i)=>N.map((_,j)=>i===j?1:0));
+const MP=Array.from({length:n},()=>new Array(5).fill(0));
+MP[0][0]=G1;MP[1][0]=1-G1;MP[2][1]=G2;MP[3][1]=1-G2;MP[4][2]=1;MP[7][3]=1;MP[10][4]=1;
+
+// ---------- optimiser ----------
+const dot=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0);
+const mv=(A,v)=>A.map(r=>dot(r,v));
+function projBox(y,ub){let lo=Math.min(...y.map((v,i)=>v-ub[i]))-1,hi=Math.max(...y)+1;
+  for(let it=0;it<100;it++){const t=(lo+hi)/2;const s=y.reduce((a,v,i)=>a+Math.min(ub[i],Math.max(0,v-t)),0);if(s>1)lo=t;else hi=t}
+  const t=(lo+hi)/2;return y.map((v,i)=>Math.min(ub[i],Math.max(0,v-t)))}
+function solve(o){
+  const {M,ub,cap,nuMin,nuMax,sMax,T,floor,useFloor}=o; const m=ub.length;
+  const toW=x=>M.map(r=>dot(r,x));
+  const MT=g=>{const out=new Array(m).fill(0);for(let i=0;i<n;i++)for(let j=0;j<m;j++)out[j]+=M[i][j]*g[i];return out};
+  const cons=[];
+  for(let i=0;i<n;i++) cons.push({kind:"cap",i,g:w=>cap[i]-w[i],d:()=>{const v=new Array(n).fill(0);v[i]=-1;return v}});
+  const eq=w=>w[0]+w[1]+w[2]+w[3]+w[4]+w[5];
+  cons.push({kind:"numin",g:w=>(w[4]+w[5])-nuMin*eq(w),d:()=>N.map((_,i)=>i<6?((i===4||i===5?1:0)-nuMin):0)});
+  cons.push({kind:"numax",g:w=>nuMax*eq(w)-(w[4]+w[5]),d:()=>N.map((_,i)=>i<6?(nuMax-(i===4||i===5?1:0)):0)});
+  cons.push({kind:"risk",g:w=>sMax*sMax-dot(w,mv(COV,w)),d:w=>mv(COV,w).map(v=>-2*v)});
+  if(useFloor){const sq=Math.sqrt(T),lf=Math.log(floor);
+    cons.push({kind:"floor",g:w=>{const r=dot(MU,w),s=Math.sqrt(Math.max(dot(w,mv(COV,w)),1e-12));return Math.log(1+r)*T-1.65*s*sq-lf},
+      d:w=>{const r=dot(MU,w),cw=mv(COV,w),s=Math.sqrt(Math.max(dot(w,cw),1e-12));return MU.map((u,i)=>T*u/(1+r)-1.65*sq*cw[i]/s)}})}
+  const K=cons.length; let lam=new Array(K).fill(0), rho=10;
+  let x=projBox(new Array(m).fill(1/m),ub);
+  const LAG=x=>{const w=toW(x);let L=dot(MU,w);for(let k=0;k<K;k++){const p=Math.max(0,lam[k]-rho*cons[k].g(w));L-=(p*p-lam[k]*lam[k])/(2*rho)}return L};
+  const GRAD=x=>{const w=toW(x);const gw=MU.slice();for(let k=0;k<K;k++){const p=Math.max(0,lam[k]-rho*cons[k].g(w));if(p>0){const d=cons[k].d(w);for(let i=0;i<n;i++)gw[i]+=p*d[i]}}return MT(gw)};
+  for(let outer=0;outer<60;outer++){
+    let step=0.5;
+    for(let inner=0;inner<3000;inner++){
+      const g=GRAD(x),L0=LAG(x);let moved=false;
+      for(let bt=0;bt<40;bt++){const xn=projBox(x.map((v,i)=>v+step*g[i]),ub);const diff=xn.reduce((s,v,i)=>s+Math.abs(v-x[i]),0);
+        if(diff<1e-12)break;
+        if(LAG(xn)>=L0+1e-4*xn.reduce((s,v,i)=>s+g[i]*(v-x[i]),0)){x=xn;moved=diff>1e-10;step*=2;break}
+        step*=0.5}
+      if(!moved)break}
+    const w=toW(x);let maxv=0;
+    for(let k=0;k<K;k++){const gk=cons[k].g(w);lam[k]=Math.max(0,lam[k]-rho*gk);maxv=Math.max(maxv,-gk)}
+    if(maxv<1e-8&&outer>12)break;
+    rho=Math.min(rho*2,1e5)}
+  const w=toW(x);
+  const binding=cons.filter((c,k)=>Math.abs(c.g(w))<2e-5&&lam[k]>1e-9).map(c=>({kind:c.kind,i:c.i}));
+  if(m===5&&x[0]>=ub[0]-1e-5) binding.push({kind:"lccap"});
+  if(m===n) for(let i=0;i<n;i++) if(ub[i]<1&&x[i]>=ub[i]-1e-5&&!binding.some(b=>b.kind==="cap"&&b.i===i)) binding.unshift({kind:"cap",i});
+  return {x,w,viol:Math.max(0,...cons.map(c=>-c.g(w))),binding};
+}
+
+// ---------- helpers ----------
+const pct=(x,d=2)=>(x*100).toFixed(d)+"%";
+const sum=a=>a.reduce((s,x)=>s+x,0);
+function stats(v){const ret=dot(v,MU),cw=mv(COV,v),vari=dot(v,cw),risk=Math.sqrt(Math.max(vari,0)),eqv=sum(v.slice(0,6));return {ret,risk,vari,cw,eq:eqv,nonus:eqv>0?(v[4]+v[5])/eqv:0}}
+const money=new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0});
+const compact=x=>x>=1e6?"$"+(x/1e6).toFixed(x>=1e7?0:1)+"M":x>=1e3?"$"+Math.round(x/1e3)+"k":"$"+Math.round(x);
+const cone=(mu,s,pv,t)=>{const g=Math.log(1+mu)*t,k=1.65*s*Math.sqrt(t);return {lo:pv*Math.exp(g-k),ex:pv*Math.exp(g),hi:pv*Math.exp(g+k)}};
+const NOW=new Date().getFullYear();
+const $=id=>document.getElementById(id);
+
+// ---------- state ----------
+let CURW=CUR0.slice();
+let lim=JSON.parse(JSON.stringify(IPS));
+let sug={w:CURW.slice(),x:null,ok:true,binding:[]};
+
+// ---------- build inputs ----------
+const capsEl=$("caps");
+N.forEach((nm,i)=>{const f=document.createElement("div");f.className="field";
+  f.innerHTML=`<label for="cap-${i}">${nm}</label><div class="num"><input id="cap-${i}" type="number" step="1" min="0" max="100"><span>%</span></div>`;capsEl.appendChild(f)});
+function fillInputs(){
+  $("smax").value=+(lim.smax*100).toFixed(2); $("rf").value=+(lim.rf*100).toFixed(2);
+  $("numin").value=+(lim.numin*100).toFixed(1); $("numax").value=+(lim.numax*100).toFixed(1);
+  $("usefloor").checked=lim.useFloor; $("floor").value=Math.round(lim.floor*100); $("floor").disabled=!lim.useFloor;
+  $("lccap").value=Math.round(lim.lccap*100);
+  N.forEach((_,i)=>$("cap-"+i).value=+(lim.cap[i]*100).toFixed(1));
+  $("u-all").setAttribute("aria-pressed",String(!lim.plan)); $("u-plan").setAttribute("aria-pressed",String(lim.plan));
+  $("plannote").hidden=!lim.plan; $("lccapfield").hidden=!lim.plan;
+}
+const numIn=(id,lo,hi,fallback)=>{let v=parseFloat($(id).value);if(!isFinite(v))return fallback;return Math.min(hi,Math.max(lo,v))};
+function readInputs(){
+  lim.smax=numIn("smax",1,30,16)/100; lim.rf=numIn("rf",0,20,4.13)/100;
+  lim.numin=numIn("numin",0,100,35)/100; lim.numax=numIn("numax",0,100,50)/100;
+  lim.useFloor=$("usefloor").checked; lim.floor=numIn("floor",10,300,100)/100; $("floor").disabled=!lim.useFloor;
+  lim.lccap=numIn("lccap",0,100,60)/100;
+  N.forEach((_,i)=>lim.cap[i]=numIn("cap-"+i,0,100,IPS.cap[i]*100)/100);
+}
+["smax","numin","numax","floor","lccap","ry"].concat(N.map((_,i)=>"cap-"+i)).forEach(id=>$(id).addEventListener("input",()=>{readInputs();schedule()}));
+$("usefloor").addEventListener("change",()=>{readInputs();schedule()});
+$("rf").addEventListener("input",()=>{readInputs();renderAll()});
+$("pv").addEventListener("input",()=>{$("pvnote").hidden=true;renderAll()});
+$("u-all").addEventListener("click",()=>{lim.plan=false;fillInputs();schedule()});
+$("u-plan").addEventListener("click",()=>{lim.plan=true;fillInputs();schedule()});
+$("resetIPS").addEventListener("click",()=>{lim=JSON.parse(JSON.stringify(IPS));$("ry").value=2065;fillInputs();schedule()});
+// current portfolio inputs
+const CG=[{name:"US equity",idx:[0,1,2,3]},{name:"International equity",idx:[4,5]},{name:"Real assets",idx:[9,6]},{name:"Fixed income & cash",idx:[7,8,10]}];
+$("curgrid").innerHTML=CG.map(g=>`<div><h4>${g.name}</h4>`+g.idx.map(i=>`<div class="field"><label for="cw-${i}">${N[i]}</label><div class="num"><input id="cw-${i}" type="number" step="0.1" min="0" max="100"><span>%</span></div></div>`).join("")+`</div>`).join("");
+function fillCur(){N.forEach((_,i)=>{const el=$("cw-"+i);if(document.activeElement!==el)el.value=+(CURW[i]*100).toFixed(1)})}
+N.forEach((_,i)=>$("cw-"+i).addEventListener("input",e=>{let v=parseFloat(e.target.value);if(!isFinite(v)||v<0)v=0;CURW[i]=Math.min(100,v)/100;$("curnote").textContent="Enter how your savings are invested today, by asset class.";renderAll()}));
+$("curscale").addEventListener("click",()=>{const t=sum(CURW);if(t>0){CURW=CURW.map(v=>v/t);fillCur();renderAll()}});
+$("curreset").addEventListener("click",()=>{CURW=CUR0.slice();fillCur();$("curnote").textContent="Enter how your savings are invested today, by asset class. The example shown is a 2065 target-date fund.";renderAll()});
+$("ry").min=NOW+1; $("ry").max=NOW+60;
+function horizon(){let ry=parseInt($("ry").value,10);if(!isFinite(ry))ry=2065;return Math.min(60,Math.max(1,ry-NOW))}
+
+
+// ---------- optimise ----------
+let timer=null;
+function schedule(){clearTimeout(timer);$("sugpanel").classList.add("busy");timer=setTimeout(runOpt,180)}
+function runOpt(){
+  const T=horizon();
+  const o={cap:lim.cap,nuMin:lim.numin,nuMax:lim.numax,sMax:lim.smax,T,floor:lim.floor,useFloor:lim.useFloor};
+  const res=lim.plan?solve({...o,M:MP,ub:[lim.lccap,1,1,1,1]}):solve({...o,M:I11,ub:lim.cap.map(c=>Math.min(1,c))});
+  sug={w:res.w,x:res.x,ok:res.viol<1e-4,binding:res.binding};
+  $("sugpanel").classList.remove("busy");
+  renderAll();
+}
+
+// ---------- render ----------
+function setDelta(id,d,fmt,better){const e=$(id);if(Math.abs(d)<1e-7){e.textContent="same as current";e.className="d";return}
+  e.textContent=(d>0?"+":"−")+fmt(Math.abs(d))+" vs current";e.className="d "+((better==="up"?d>0:d<0)?"up":"down")}
+function renderAll(){
+  const T=horizon(); $("hz").textContent=T+(T===1?" year":" years")+" ("+NOW+"–"+(NOW+T)+")";
+  let pv=parseFloat($("pv").value); if(!isFinite(pv)||pv<0) pv=0;
+  const base=stats(CURW), s=stats(sug.w), rf=lim.rf;
+  const ct=sum(CURW); $("curtotal").textContent=pct(ct,1); $("curtotal").style.color=Math.abs(ct-1)<5e-4?"var(--ok)":"var(--bad)";
+  $("curscale").disabled=Math.abs(ct-1)<5e-4||ct===0; $("cur-ret").textContent=pct(base.ret); $("cur-risk").textContent=pct(base.risk);
+  const sh=w=>{const t=stats(w);return t.risk>0?(t.ret-rf)/t.risk:0};
+  // status
+  $("spill").className="pill "+(sug.ok?"ok":"bad"); $("spill").textContent=sug.ok?"OPTIMAL":"NO SOLUTION";
+  $("stext").textContent=sug.ok?"Highest expected return that meets every limit.":"No allocation meets all of these limits. Try a lower bad-case floor, a later retirement year, a higher maximum risk or wider non-US range.";
+  ["s-ret","s-risk","s-sh"].forEach(id=>$(id).style.opacity=sug.ok?1:.35);
+  $("s-ret").textContent=pct(s.ret); $("s-risk").textContent=pct(s.risk); $("s-sh").textContent=sh(sug.w).toFixed(3);
+  setDelta("s-ret-d",s.ret-base.ret,x=>(x*100).toFixed(2)+" pp","up");
+  setDelta("s-risk-d",s.risk-base.risk,x=>(x*100).toFixed(2)+" pp","down");
+  setDelta("s-sh-d",sh(sug.w)-sh(CURW),x=>x.toFixed(3),"up");
+  // moves
+  const order=[...Array(n).keys()].filter(i=>CURW[i]>5e-4||sug.w[i]>5e-4).sort((a,b)=>Math.abs(sug.w[b]-CURW[b])-Math.abs(sug.w[a]-CURW[a]));
+  const mx=Math.max(...order.map(i=>Math.max(CURW[i],sug.w[i])),0.01);
+  $("moves").innerHTML=order.map(i=>{const d=sug.w[i]-CURW[i];const cls=Math.abs(d)<5e-4?"":(d>0?"up":"down");
+    return `<div class="mv"><span>${N[i]}</span><div class="bars" title="${pct(CURW[i],1)} → ${pct(sug.w[i],1)}"><i class="a" style="width:${CURW[i]/mx*100}%"></i><i class="b" style="width:${sug.w[i]/mx*100}%"></i></div><span class="chg ${cls}">${pct(CURW[i],1)}→${pct(sug.w[i],1)}</span></div>`}).join("");
+  $("fundbox").hidden=!lim.plan||!sug.x;
+  if(lim.plan&&sug.x) $("funds").innerHTML=FUNDS.map((f,j)=>`<li><span>${f}</span><b>${pct(sug.x[j],1)}</b></li>`).join("");
+  // limits
+  const L=[];
+  sug.binding.forEach(b=>{
+    if(b.kind==="cap") L.push(`${N[b.i]} is at its ${pct(lim.cap[b.i],0)} cap.`);
+    if(b.kind==="numin") L.push(`Non-US equities are at the ${pct(lim.numin,0)} minimum (of equities).`);
+    if(b.kind==="numax") L.push(`Non-US equities are at the ${pct(lim.numax,0)} maximum (of equities).`);
+    if(b.kind==="risk") L.push(`Risk is at the ${pct(lim.smax,1)} maximum.`);
+    if(b.kind==="floor") L.push(`With ${T} years to retirement, the bad-case floor (${pct(lim.floor,0)} of today's value) caps how much risk is allowed.`);
+    if(b.kind==="lccap") L.push(`The large-cap fund is at its ${pct(lim.lccap,0)} maximum.`);
+  });
+  if(lim.plan) L.push("Plan menu only: EM, Gold, High Yield and REITs are unavailable, and large caps can only be held as a blend.");
+  if(sug.ok&&!sug.binding.some(b=>b.kind==="risk"||b.kind==="floor")) L.push(`Risk (${pct(s.risk)}) is below the ${pct(lim.smax,1)} maximum: under these return assumptions, taking more risk would lower expected return.`);
+  $("limits").innerHTML=(sug.ok?L:["No allocation satisfies every limit at once."]).map(t=>`<li>${t}</li>`).join("");
+  // outlook
+  const cs=cone(s.ret,s.risk,pv,T), cc=cone(base.ret,base.risk,pv,T);
+  const setO=(id,v,c)=>{$(id).textContent=money.format(v);const d=v-c,e=$(id+"-d");e.textContent=Math.abs(d)<0.5?"same as current":(d>0?"+":"−")+money.format(Math.abs(d))+" vs current";e.className="d"+(Math.abs(d)<0.5?"":(d>0?" up":" down"))};
+  setO("o-lo",cs.lo,cc.lo); setO("o-ex",cs.ex,cc.ex); setO("o-hi",cs.hi,cc.hi);
+  $("outnote").textContent=`Value of your savings in ${NOW+T}, starting from ${money.format(pv)}: suggested portfolio vs the current portfolio.`;
+  drawCone(pv,T,s,base);
+  // compare
+  const rows=[["Current portfolio","var(--c-current)",CURW],["Suggested","var(--c-sugg)",sug.w]];
+  $("cmp").innerHTML=rows.map(([nm,col,v])=>{const t=stats(v);return `<tr><td><span class="sw" style="background:${col}"></span>${nm}</td><td class="mono">${pct(t.ret)}</td><td class="mono">${pct(t.risk)}</td><td class="mono">${sh(v).toFixed(3)}</td><td class="mono">${pct(t.eq,1)}</td><td class="mono">${pct(t.nonus,1)}</td></tr>`}).join("");
+}
+function niceStep(max){const raw=max/5,p=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/p;return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*p}
+function drawCone(pv,T,s,base){
+  const W=760,H=300,L=64,Rm=18,Tm=14,B=34,pw=W-L-Rm,ph=H-Tm-B;
+  const pts=[];for(let t=0;t<=T;t++){const a=cone(s.ret,s.risk,pv,t);pts.push({t,lo:a.lo,ex:a.ex,hi:a.hi,cur:cone(base.ret,base.risk,pv,t).ex})}
+  const ymax=Math.max(1,...pts.map(p=>Math.max(p.hi,p.cur)));
+  const step=niceStep(ymax),top=Math.ceil(ymax/step)*step;
+  const x=t=>L+t/T*pw,y=v=>Tm+ph-(v/top)*ph;
+  let g="";
+  for(let v=0;v<=top+1e-9;v+=step)g+=`<line class="grid" x1="${L}" x2="${W-Rm}" y1="${y(v)}" y2="${y(v)}"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end">${compact(v)}</text>`;
+  const xs=T<=10?1:T<=25?5:10;
+  for(let t=0;t<=T;t+=xs)if(T-t>=xs*0.4||t===T)g+=`<text x="${x(t)}" y="${H-12}" text-anchor="middle">${NOW+t}</text>`;
+  if(T%xs!==0)g+=`<text x="${x(T)}" y="${H-12}" text-anchor="middle">${NOW+T}</text>`;
+  const line=k=>pts.map((p,i)=>(i?"L":"M")+x(p.t).toFixed(1)+","+y(p[k]).toFixed(1)).join("");
+  const band=line("hi")+pts.slice().reverse().map(p=>"L"+x(p.t).toFixed(1)+","+y(p.lo).toFixed(1)).join("")+"Z";
+  g+=`<path class="band" d="${band}"/><path class="bnd" d="${line("hi")}"/><path class="bnd" d="${line("lo")}"/><path class="cur" d="${line("cur")}"/>`;
+  g+=`<path class="exp" d="${line("ex")}"/><circle class="end" cx="${x(T)}" cy="${y(pts[pts.length-1].ex)}" r="4"/>`;
+  $("cone").innerHTML=g;
+}
+
+$("assum").innerHTML=N.map((nm,i)=>`<tr><td>${nm}</td><td class="mono">${pct(MU[i])}</td><td class="mono">${pct(SD[i])}</td><td class="mono">${pct(IPS.cap[i],0)}</td><td>${MENU[i]?"Yes":"No"}</td></tr>`).join("");
+
+fillInputs(); fillCur(); renderAll();
+setTimeout(runOpt,30);
+})();
+</script>
+
+</body>
+</html>
